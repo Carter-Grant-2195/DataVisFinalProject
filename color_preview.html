@@ -1,0 +1,124 @@
+<!doctype html><html><head><meta charset="utf-8"><title>Color choice preview</title>
+<style>
+ body { font-family: system-ui, sans-serif; margin: 24px; background: #fff; color: #222; }
+ section { border-bottom: 1px solid #ddd; padding: 12px 0; }
+ h2 { font-size: 16px; margin: 0 0 8px; }
+ .row { display: flex; gap: 24px; align-items: center; flex-wrap: wrap; }
+ .swatches { display: flex; gap: 8px; flex-wrap: wrap; }
+ .sw { text-align: center; font-size: 12px; }
+ .chip { width: 56px; height: 40px; border-radius: 4px; border: 1px solid #0002; }
+ .stats { font-size: 13px; color: #555; }
+</style></head><body>
+<h1>Color choice preview</h1>
+<p>Higher min &Delta;E (CIEDE2000) = easier to tell the most similar two slices apart
+(about 10+ is clearly distinct). Pair preference is 0&ndash;1, higher = predicted more pleasing.</p>
+
+        <section>
+          <h2>Tableau-10 (reference)</h2>
+          <div class="row">
+            <svg width="160" height="160"><path d="M80.0,80.0 L80.00,2.00 A78.0,78.0 0 0 1 147.55,41.00 Z" fill="#1f77b4" stroke="#fff" stroke-width="1"/><path d="M80.0,80.0 L147.55,41.00 A78.0,78.0 0 0 1 147.55,119.00 Z" fill="#ff7f0e" stroke="#fff" stroke-width="1"/><path d="M80.0,80.0 L147.55,119.00 A78.0,78.0 0 0 1 80.00,158.00 Z" fill="#2ca02c" stroke="#fff" stroke-width="1"/><path d="M80.0,80.0 L80.00,158.00 A78.0,78.0 0 0 1 12.45,119.00 Z" fill="#d62728" stroke="#fff" stroke-width="1"/><path d="M80.0,80.0 L12.45,119.00 A78.0,78.0 0 0 1 12.45,41.00 Z" fill="#9467bd" stroke="#fff" stroke-width="1"/><path d="M80.0,80.0 L12.45,41.00 A78.0,78.0 0 0 1 80.00,2.00 Z" fill="#8c564b" stroke="#fff" stroke-width="1"/></svg>
+            <div>
+              <div class="swatches"><div class="sw"><div class="chip" style="background:#1f77b4"></div><code>#1f77b4</code><br>blue</div><div class="sw"><div class="chip" style="background:#ff7f0e"></div><code>#ff7f0e</code><br>orange</div><div class="sw"><div class="chip" style="background:#2ca02c"></div><code>#2ca02c</code><br>green</div><div class="sw"><div class="chip" style="background:#d62728"></div><code>#d62728</code><br>red</div><div class="sw"><div class="chip" style="background:#9467bd"></div><code>#9467bd</code><br>violet</div><div class="sw"><div class="chip" style="background:#8c564b"></div><code>#8c564b</code><br>brown</div></div>
+              <p class="stats">min &Delta;E: <b>16.2</b> &middot;
+                 mean &Delta;E: <b>42.47</b> &middot;
+                 mean pair preference: <b>0.31</b></p>
+            </div>
+          </div>
+        </section>
+        <section>
+          <h2>Default weights, random_seed=0</h2>
+          <div class="row">
+            <svg width="160" height="160"><path d="M80.0,80.0 L80.00,2.00 A78.0,78.0 0 0 1 147.55,41.00 Z" fill="#d1b39a" stroke="#fff" stroke-width="1"/><path d="M80.0,80.0 L147.55,41.00 A78.0,78.0 0 0 1 147.55,119.00 Z" fill="#280abf" stroke="#fff" stroke-width="1"/><path d="M80.0,80.0 L147.55,119.00 A78.0,78.0 0 0 1 80.00,158.00 Z" fill="#3293f7" stroke="#fff" stroke-width="1"/><path d="M80.0,80.0 L80.00,158.00 A78.0,78.0 0 0 1 12.45,119.00 Z" fill="#383e21" stroke="#fff" stroke-width="1"/><path d="M80.0,80.0 L12.45,119.00 A78.0,78.0 0 0 1 12.45,41.00 Z" fill="#2febeb" stroke="#fff" stroke-width="1"/><path d="M80.0,80.0 L12.45,41.00 A78.0,78.0 0 0 1 80.00,2.00 Z" fill="#fc5aec" stroke="#fff" stroke-width="1"/></svg>
+            <div>
+              <div class="swatches"><div class="sw"><div class="chip" style="background:#d1b39a"></div><code>#d1b39a</code><br>tan</div><div class="sw"><div class="chip" style="background:#280abf"></div><code>#280abf</code><br>indigo</div><div class="sw"><div class="chip" style="background:#3293f7"></div><code>#3293f7</code><br>sky blue</div><div class="sw"><div class="chip" style="background:#383e21"></div><code>#383e21</code><br>dark olive</div><div class="sw"><div class="chip" style="background:#2febeb"></div><code>#2febeb</code><br>cyan</div><div class="sw"><div class="chip" style="background:#fc5aec"></div><code>#fc5aec</code><br>pink</div></div>
+              <p class="stats">min &Delta;E: <b>35.04</b> &middot;
+                 mean &Delta;E: <b>50.21</b> &middot;
+                 mean pair preference: <b>0.44</b></p>
+            </div>
+          </div>
+        </section>
+        <section>
+          <h2>Default weights, random_seed=1</h2>
+          <div class="row">
+            <svg width="160" height="160"><path d="M80.0,80.0 L80.00,2.00 A78.0,78.0 0 0 1 147.55,41.00 Z" fill="#b47715" stroke="#fff" stroke-width="1"/><path d="M80.0,80.0 L147.55,41.00 A78.0,78.0 0 0 1 147.55,119.00 Z" fill="#03f622" stroke="#fff" stroke-width="1"/><path d="M80.0,80.0 L147.55,119.00 A78.0,78.0 0 0 1 80.00,158.00 Z" fill="#094520" stroke="#fff" stroke-width="1"/><path d="M80.0,80.0 L80.00,158.00 A78.0,78.0 0 0 1 12.45,119.00 Z" fill="#33c7f4" stroke="#fff" stroke-width="1"/><path d="M80.0,80.0 L12.45,119.00 A78.0,78.0 0 0 1 12.45,41.00 Z" fill="#700067" stroke="#fff" stroke-width="1"/><path d="M80.0,80.0 L12.45,41.00 A78.0,78.0 0 0 1 80.00,2.00 Z" fill="#fbaee9" stroke="#fff" stroke-width="1"/></svg>
+            <div>
+              <div class="swatches"><div class="sw"><div class="chip" style="background:#b47715"></div><code>#b47715</code><br>light brown</div><div class="sw"><div class="chip" style="background:#03f622"></div><code>#03f622</code><br>bright green</div><div class="sw"><div class="chip" style="background:#094520"></div><code>#094520</code><br>dark green</div><div class="sw"><div class="chip" style="background:#33c7f4"></div><code>#33c7f4</code><br>light blue</div><div class="sw"><div class="chip" style="background:#700067"></div><code>#700067</code><br>purple</div><div class="sw"><div class="chip" style="background:#fbaee9"></div><code>#fbaee9</code><br>pink</div></div>
+              <p class="stats">min &Delta;E: <b>43.12</b> &middot;
+                 mean &Delta;E: <b>61.66</b> &middot;
+                 mean pair preference: <b>0.4</b></p>
+            </div>
+          </div>
+        </section>
+        <section>
+          <h2>Default weights, random_seed=2</h2>
+          <div class="row">
+            <svg width="160" height="160"><path d="M80.0,80.0 L80.00,2.00 A78.0,78.0 0 0 1 147.55,41.00 Z" fill="#9abed0" stroke="#fff" stroke-width="1"/><path d="M80.0,80.0 L147.55,41.00 A78.0,78.0 0 0 1 147.55,119.00 Z" fill="#153d66" stroke="#fff" stroke-width="1"/><path d="M80.0,80.0 L147.55,119.00 A78.0,78.0 0 0 1 80.00,158.00 Z" fill="#176e0c" stroke="#fff" stroke-width="1"/><path d="M80.0,80.0 L80.00,158.00 A78.0,78.0 0 0 1 12.45,119.00 Z" fill="#02f560" stroke="#fff" stroke-width="1"/><path d="M80.0,80.0 L12.45,119.00 A78.0,78.0 0 0 1 12.45,41.00 Z" fill="#ff2540" stroke="#fff" stroke-width="1"/><path d="M80.0,80.0 L12.45,41.00 A78.0,78.0 0 0 1 80.00,2.00 Z" fill="#febb03" stroke="#fff" stroke-width="1"/></svg>
+            <div>
+              <div class="swatches"><div class="sw"><div class="chip" style="background:#9abed0"></div><code>#9abed0</code><br>light blue</div><div class="sw"><div class="chip" style="background:#153d66"></div><code>#153d66</code><br>blue</div><div class="sw"><div class="chip" style="background:#176e0c"></div><code>#176e0c</code><br>olive</div><div class="sw"><div class="chip" style="background:#02f560"></div><code>#02f560</code><br>bright green</div><div class="sw"><div class="chip" style="background:#ff2540"></div><code>#ff2540</code><br>red</div><div class="sw"><div class="chip" style="background:#febb03"></div><code>#febb03</code><br>gold</div></div>
+              <p class="stats">min &Delta;E: <b>39.15</b> &middot;
+                 mean &Delta;E: <b>53.99</b> &middot;
+                 mean pair preference: <b>0.4</b></p>
+            </div>
+          </div>
+        </section>
+        <section>
+          <h2>Default weights, random_seed=3</h2>
+          <div class="row">
+            <svg width="160" height="160"><path d="M80.0,80.0 L80.00,2.00 A78.0,78.0 0 0 1 147.55,41.00 Z" fill="#82cd14" stroke="#fff" stroke-width="1"/><path d="M80.0,80.0 L147.55,41.00 A78.0,78.0 0 0 1 147.55,119.00 Z" fill="#280abf" stroke="#fff" stroke-width="1"/><path d="M80.0,80.0 L147.55,119.00 A78.0,78.0 0 0 1 80.00,158.00 Z" fill="#59c3fe" stroke="#fff" stroke-width="1"/><path d="M80.0,80.0 L80.00,158.00 A78.0,78.0 0 0 1 12.45,119.00 Z" fill="#363e29" stroke="#fff" stroke-width="1"/><path d="M80.0,80.0 L12.45,119.00 A78.0,78.0 0 0 1 12.45,41.00 Z" fill="#f781df" stroke="#fff" stroke-width="1"/><path d="M80.0,80.0 L12.45,41.00 A78.0,78.0 0 0 1 80.00,2.00 Z" fill="#037399" stroke="#fff" stroke-width="1"/></svg>
+            <div>
+              <div class="swatches"><div class="sw"><div class="chip" style="background:#82cd14"></div><code>#82cd14</code><br>lime</div><div class="sw"><div class="chip" style="background:#280abf"></div><code>#280abf</code><br>indigo</div><div class="sw"><div class="chip" style="background:#59c3fe"></div><code>#59c3fe</code><br>sky blue</div><div class="sw"><div class="chip" style="background:#363e29"></div><code>#363e29</code><br>dark olive</div><div class="sw"><div class="chip" style="background:#f781df"></div><code>#f781df</code><br>pink</div><div class="sw"><div class="chip" style="background:#037399"></div><code>#037399</code><br>dark teal</div></div>
+              <p class="stats">min &Delta;E: <b>26.58</b> &middot;
+                 mean &Delta;E: <b>54.89</b> &middot;
+                 mean pair preference: <b>0.46</b></p>
+            </div>
+          </div>
+        </section>
+        <section>
+          <h2>Default weights, random_seed=4</h2>
+          <div class="row">
+            <svg width="160" height="160"><path d="M80.0,80.0 L80.00,2.00 A78.0,78.0 0 0 1 147.55,41.00 Z" fill="#64c115" stroke="#fff" stroke-width="1"/><path d="M80.0,80.0 L147.55,41.00 A78.0,78.0 0 0 1 147.55,119.00 Z" fill="#3b04b6" stroke="#fff" stroke-width="1"/><path d="M80.0,80.0 L147.55,119.00 A78.0,78.0 0 0 1 80.00,158.00 Z" fill="#6dc0fe" stroke="#fff" stroke-width="1"/><path d="M80.0,80.0 L80.00,158.00 A78.0,78.0 0 0 1 12.45,119.00 Z" fill="#363e29" stroke="#fff" stroke-width="1"/><path d="M80.0,80.0 L12.45,119.00 A78.0,78.0 0 0 1 12.45,41.00 Z" fill="#ff7bdf" stroke="#fff" stroke-width="1"/><path d="M80.0,80.0 L12.45,41.00 A78.0,78.0 0 0 1 80.00,2.00 Z" fill="#f77b01" stroke="#fff" stroke-width="1"/></svg>
+            <div>
+              <div class="swatches"><div class="sw"><div class="chip" style="background:#64c115"></div><code>#64c115</code><br>green</div><div class="sw"><div class="chip" style="background:#3b04b6"></div><code>#3b04b6</code><br>indigo</div><div class="sw"><div class="chip" style="background:#6dc0fe"></div><code>#6dc0fe</code><br>sky blue</div><div class="sw"><div class="chip" style="background:#363e29"></div><code>#363e29</code><br>dark olive</div><div class="sw"><div class="chip" style="background:#ff7bdf"></div><code>#ff7bdf</code><br>pink</div><div class="sw"><div class="chip" style="background:#f77b01"></div><code>#f77b01</code><br>orange</div></div>
+              <p class="stats">min &Delta;E: <b>45.39</b> &middot;
+                 mean &Delta;E: <b>59.21</b> &middot;
+                 mean pair preference: <b>0.38</b></p>
+            </div>
+          </div>
+        </section>
+        <section>
+          <h2>Seed #1f77b4, distance only</h2>
+          <div class="row">
+            <svg width="160" height="160"><path d="M80.0,80.0 L80.00,2.00 A78.0,78.0 0 0 1 147.55,41.00 Z" fill="#1f77b4" stroke="#fff" stroke-width="1"/><path d="M80.0,80.0 L147.55,41.00 A78.0,78.0 0 0 1 147.55,119.00 Z" fill="#cbe013" stroke="#fff" stroke-width="1"/><path d="M80.0,80.0 L147.55,119.00 A78.0,78.0 0 0 1 80.00,158.00 Z" fill="#324f01" stroke="#fff" stroke-width="1"/><path d="M80.0,80.0 L80.00,158.00 A78.0,78.0 0 0 1 12.45,119.00 Z" fill="#fb3302" stroke="#fff" stroke-width="1"/><path d="M80.0,80.0 L12.45,119.00 A78.0,78.0 0 0 1 12.45,41.00 Z" fill="#700e57" stroke="#fff" stroke-width="1"/><path d="M80.0,80.0 L12.45,41.00 A78.0,78.0 0 0 1 80.00,2.00 Z" fill="#fb77fa" stroke="#fff" stroke-width="1"/></svg>
+            <div>
+              <div class="swatches"><div class="sw"><div class="chip" style="background:#1f77b4"></div><code>#1f77b4</code><br>blue</div><div class="sw"><div class="chip" style="background:#cbe013"></div><code>#cbe013</code><br>yellow</div><div class="sw"><div class="chip" style="background:#324f01"></div><code>#324f01</code><br>dark olive</div><div class="sw"><div class="chip" style="background:#fb3302"></div><code>#fb3302</code><br>red</div><div class="sw"><div class="chip" style="background:#700e57"></div><code>#700e57</code><br>dark purple</div><div class="sw"><div class="chip" style="background:#fb77fa"></div><code>#fb77fa</code><br>pink</div></div>
+              <p class="stats">min &Delta;E: <b>43.09</b> &middot;
+                 mean &Delta;E: <b>58.42</b> &middot;
+                 mean pair preference: <b>0.37</b></p>
+            </div>
+          </div>
+        </section>
+        <section>
+          <h2>Seed #1f77b4, preference only</h2>
+          <div class="row">
+            <svg width="160" height="160"><path d="M80.0,80.0 L80.00,2.00 A78.0,78.0 0 0 1 147.55,41.00 Z" fill="#1f77b4" stroke="#fff" stroke-width="1"/><path d="M80.0,80.0 L147.55,41.00 A78.0,78.0 0 0 1 147.55,119.00 Z" fill="#82d0fa" stroke="#fff" stroke-width="1"/><path d="M80.0,80.0 L147.55,119.00 A78.0,78.0 0 0 1 80.00,158.00 Z" fill="#153d66" stroke="#fff" stroke-width="1"/><path d="M80.0,80.0 L80.00,158.00 A78.0,78.0 0 0 1 12.45,119.00 Z" fill="#8be0ff" stroke="#fff" stroke-width="1"/><path d="M80.0,80.0 L12.45,119.00 A78.0,78.0 0 0 1 12.45,41.00 Z" fill="#025787" stroke="#fff" stroke-width="1"/><path d="M80.0,80.0 L12.45,41.00 A78.0,78.0 0 0 1 80.00,2.00 Z" fill="#68c2f5" stroke="#fff" stroke-width="1"/></svg>
+            <div>
+              <div class="swatches"><div class="sw"><div class="chip" style="background:#1f77b4"></div><code>#1f77b4</code><br>blue</div><div class="sw"><div class="chip" style="background:#82d0fa"></div><code>#82d0fa</code><br>light blue</div><div class="sw"><div class="chip" style="background:#153d66"></div><code>#153d66</code><br>blue</div><div class="sw"><div class="chip" style="background:#8be0ff"></div><code>#8be0ff</code><br>light blue</div><div class="sw"><div class="chip" style="background:#025787"></div><code>#025787</code><br>blue</div><div class="sw"><div class="chip" style="background:#68c2f5"></div><code>#68c2f5</code><br>sky blue</div></div>
+              <p class="stats">min &Delta;E: <b>4.2</b> &middot;
+                 mean &Delta;E: <b>28.87</b> &middot;
+                 mean pair preference: <b>0.73</b></p>
+            </div>
+          </div>
+        </section>
+        <section>
+          <h2>Seed #1f77b4, equal weights</h2>
+          <div class="row">
+            <svg width="160" height="160"><path d="M80.0,80.0 L80.00,2.00 A78.0,78.0 0 0 1 147.55,41.00 Z" fill="#1f77b4" stroke="#fff" stroke-width="1"/><path d="M80.0,80.0 L147.55,41.00 A78.0,78.0 0 0 1 147.55,119.00 Z" fill="#7ae3ff" stroke="#fff" stroke-width="1"/><path d="M80.0,80.0 L147.55,119.00 A78.0,78.0 0 0 1 80.00,158.00 Z" fill="#054601" stroke="#fff" stroke-width="1"/><path d="M80.0,80.0 L80.00,158.00 A78.0,78.0 0 0 1 12.45,119.00 Z" fill="#03f622" stroke="#fff" stroke-width="1"/><path d="M80.0,80.0 L12.45,119.00 A78.0,78.0 0 0 1 12.45,41.00 Z" fill="#0c947f" stroke="#fff" stroke-width="1"/><path d="M80.0,80.0 L12.45,41.00 A78.0,78.0 0 0 1 80.00,2.00 Z" fill="#0b4f53" stroke="#fff" stroke-width="1"/></svg>
+            <div>
+              <div class="swatches"><div class="sw"><div class="chip" style="background:#1f77b4"></div><code>#1f77b4</code><br>blue</div><div class="sw"><div class="chip" style="background:#7ae3ff"></div><code>#7ae3ff</code><br>light blue</div><div class="sw"><div class="chip" style="background:#054601"></div><code>#054601</code><br>dark green</div><div class="sw"><div class="chip" style="background:#03f622"></div><code>#03f622</code><br>bright green</div><div class="sw"><div class="chip" style="background:#0c947f"></div><code>#0c947f</code><br>teal</div><div class="sw"><div class="chip" style="background:#0b4f53"></div><code>#0b4f53</code><br>dark teal</div></div>
+              <p class="stats">min &Delta;E: <b>24.17</b> &middot;
+                 mean &Delta;E: <b>41.91</b> &middot;
+                 mean pair preference: <b>0.57</b></p>
+            </div>
+          </div>
+        </section>
+</body></html>
