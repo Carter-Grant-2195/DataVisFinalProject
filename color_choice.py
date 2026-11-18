@@ -6,7 +6,7 @@ Main function (this is what run.py should call):
 How it works:
     1. Make a grid of candidate colors.
     2. Start the palette with the seed color(s), or a random candidate.
-    3. Give every candidate a score and add the best one. Repeat until we have n_colors.
+    3. Score every candidate and add the best one. Repeat until we have n_colors.
        score = distance_weight   * how different it looks from the closest palette color
              + preference_weight * how nice it looks next to the palette colors
 
@@ -15,14 +15,15 @@ Test by itself:
 """
 
 import argparse
+from itertools import combinations
 
 import numpy as np
 
-# Default settings (can all be overridden when calling choose_colors)
-DISTANCE_WEIGHT = 1.0      # how much we care that colors are easy to tell apart
-PREFERENCE_WEIGHT = 0.5    # how much we care that colors look nice together
+# Default settings (all can be overridden when calling choose_colors)
+DISTANCE_WEIGHT = 1.0       # how much we care that colors are easy to tell apart
+PREFERENCE_WEIGHT = 0.5     # how much we care that colors look nice together
 LIGHTNESS_RANGE = (25, 85)  # 0 = black, 100 = white; skip near-black and near-white
-GRID_STEP = 5              # spacing between candidate colors (smaller = more candidates, slower)
+GRID_STEP = 5               # spacing between candidate colors (smaller = more candidates, slower)
 
 # Standard sRGB constants used for the color conversions
 WHITE_POINT = np.array([0.95047, 1.00000, 1.08883])
@@ -38,76 +39,55 @@ XYZ_TO_RGB = np.linalg.inv(RGB_TO_XYZ)
 # Color conversions
 # Lab is a color space where distances match how different colors look to people:
 #   L = lightness (0-100), a = green<->red, b = blue<->yellow
+# These functions work on one color [L, a, b] or an array of many colors.
 # ---------------------------------------------------------------------------
+def split_lab(lab):
+    """Splits Lab color(s) into separate L, a and b values."""
+    lab = np.asarray(lab, dtype=float)
+    return lab[..., 0], lab[..., 1], lab[..., 2]
+
+
 def hex_to_lab(hex_color):
     """Converts a hex string like "#1f77b4" into a Lab color [L, a, b]."""
     hex_color = hex_color.strip().lstrip("#")
-    if len(hex_color) == 3:  # short form like "f80"
+    if len(hex_color) == 3:  # short form, e.g. "f80" -> "ff8800"
         hex_color = "".join(char * 2 for char in hex_color)
     if len(hex_color) != 6:
         raise ValueError(f"Invalid hex color: {hex_color!r}")
 
     rgb = np.array([int(hex_color[i:i + 2], 16) for i in (0, 2, 4)]) / 255
-    linear = np.where(rgb <= 0.04045, rgb / 12.92, ((rgb + 0.055) / 1.055) ** 2.4)
-    xyz = (RGB_TO_XYZ @ linear) / WHITE_POINT
+    linear_rgb = np.where(rgb <= 0.04045, rgb / 12.92, ((rgb + 0.055) / 1.055) ** 2.4)
+    xyz = (RGB_TO_XYZ @ linear_rgb) / WHITE_POINT
+
     f = np.where(xyz > (6 / 29) ** 3, np.cbrt(xyz), xyz / (3 * (6 / 29) ** 2) + 4 / 29)
-    return np.array([116 * f[1] - 16, 500 * (f[0] - f[1]), 200 * (f[1] - f[2])])
+    fx, fy, fz = f
+    return np.array([116 * fy - 16, 500 * (fx - fy), 200 * (fy - fz)])
 
 
 def lab_to_linear_rgb(lab):
-    """Converts Lab colors to linear RGB; any value outside 0-1 means the color can't be shown on screen."""
-    lab = np.asarray(lab, dtype=float)
-    fy = (lab[..., 0] + 16) / 116
-    fx = fy + lab[..., 1] / 500
-    fz = fy - lab[..., 2] / 200
-    f = np.stack([fx, fy, fz], axis=-1)
+    """Converts Lab color(s) to linear RGB; values outside 0-1 mean the color can't be shown on screen."""
+    L, a, b = split_lab(lab)
+    fy = (L + 16) / 116
+    f = np.stack([fy + a / 500, fy, fy - b / 200], axis=-1)
+
     xyz = np.where(f > 6 / 29, f ** 3, 3 * (6 / 29) ** 2 * (f - 4 / 29)) * WHITE_POINT
     return xyz @ XYZ_TO_RGB.T
 
 
 def lab_to_hex(lab):
     """Converts a Lab color [L, a, b] into a hex string like "#1f77b4"."""
-    linear = np.clip(lab_to_linear_rgb(lab), 0, 1)
-    rgb = np.where(linear <= 0.0031308, 12.92 * linear, 1.055 * linear ** (1 / 2.4) - 0.055)
+    linear_rgb = np.clip(lab_to_linear_rgb(lab), 0, 1)
+    rgb = np.where(linear_rgb <= 0.0031308, 12.92 * linear_rgb, 1.055 * linear_rgb ** (1 / 2.4) - 0.055)
     red, green, blue = [int(round(value * 255)) for value in rgb]
     return f"#{red:02x}{green:02x}{blue:02x}"
 
 
 def lab_to_lch(lab):
-    """Converts Lab colors to [lightness, chroma (how colorful), hue angle in degrees]."""
-    lab = np.asarray(lab, dtype=float)
-    chroma = np.sqrt(lab[..., 1] ** 2 + lab[..., 2] ** 2)
-    hue = np.degrees(np.arctan2(lab[..., 2], lab[..., 1])) % 360
-    return np.stack([lab[..., 0], chroma, hue], axis=-1)
-
-
-# ---------------------------------------------------------------------------
-# Color names (for readable output only -- they don't affect which colors get picked)
-# Common names with hex values based on the XKCD color survey (public domain).
-# Add or remove names here to change what gets printed.
-# ---------------------------------------------------------------------------
-COLOR_NAMES = {
-    "black": "#000000", "dark gray": "#363737", "gray": "#929591", "light gray": "#d8dcd6",
-    "white": "#ffffff",
-    "dark red": "#840000", "red": "#e50000", "maroon": "#650021", "salmon": "#ff796c",
-    "orange": "#f97306", "light orange": "#fdaa48", "dark brown": "#653700", "brown": "#875f42",
-    "light brown": "#ad8150", "tan": "#d1b26f",
-    "beige": "#e6daa6", "gold": "#dbb40c", "yellow": "#ffff14", "olive": "#6e750e",
-    "dark olive": "#373e02", "lime": "#aaff32", "light green": "#96f97b", "green": "#15b01a",
-    "bright green": "#01ff07", "dark green": "#033500", "turquoise": "#06c2ac", "teal": "#029386",
-    "dark teal": "#014d4e", "cyan": "#00ffff", "light blue": "#95d0fc", "sky blue": "#75bbfd",
-    "blue": "#0343df", "dark blue": "#00035b", "indigo": "#380282", "violet": "#9a0eea",
-    "purple": "#7e1e9c", "dark purple": "#35063e", "lavender": "#c79fef", "magenta": "#c20078",
-    "hot pink": "#ff028d", "pink": "#ff81c0", "light pink": "#ffd1df",
-}
-
-
-def color_name(hex_color):
-    """Returns the closest everyday name for a hex color, e.g. "#1f77b4" -> "blue"."""
-    names = list(COLOR_NAMES)
-    name_labs = np.array([hex_to_lab(COLOR_NAMES[name]) for name in names])
-    distances = ciede2000(hex_to_lab(hex_color), name_labs)
-    return names[int(np.argmin(distances))]
+    """Converts Lab color(s) to [lightness, chroma (how colorful), hue angle in degrees]."""
+    L, a, b = split_lab(lab)
+    chroma = np.hypot(a, b)
+    hue = np.degrees(np.arctan2(b, a)) % 360
+    return np.stack([L, chroma, hue], axis=-1)
 
 
 # ---------------------------------------------------------------------------
@@ -115,14 +95,12 @@ def color_name(hex_color):
 # ---------------------------------------------------------------------------
 def ciede2000(lab1, lab2):
     """Returns how different two colors look (about 2 = barely noticeable, 10+ = clearly different)."""
-    # This is the standard CIEDE2000 formula (Sharma et al. 2005). It's long, but you
-    # shouldn't need to change it -- test_color_choice.py checks it against published values.
-    lab1 = np.asarray(lab1, dtype=float)
-    lab2 = np.asarray(lab2, dtype=float)
-    L1, a1, b1 = lab1[..., 0], lab1[..., 1], lab1[..., 2]
-    L2, a2, b2 = lab2[..., 0], lab2[..., 1], lab2[..., 2]
+    # Standard CIEDE2000 formula (Sharma et al. 2005). It's long, but you shouldn't need
+    # to change it -- test_color_choice.py checks it against published values.
+    L1, a1, b1 = split_lab(lab1)
+    L2, a2, b2 = split_lab(lab2)
 
-    # adjust a* to handle grayish colors better
+    # adjust a* so grayish colors are handled better
     avg_chroma = (np.hypot(a1, b1) + np.hypot(a2, b2)) / 2
     G = 0.5 * (1 - np.sqrt(avg_chroma ** 7 / (avg_chroma ** 7 + 25 ** 7)))
     a1, a2 = (1 + G) * a1, (1 + G) * a2
@@ -157,23 +135,28 @@ def ciede2000(lab1, lab2):
                    + R_T * (dC / S_C) * (dH / S_H))
 
 
+def fade_to_neutral(score, strength):
+    """Pulls a 0-1 score toward 0.5 when strength is low (used for grays, which have no real hue)."""
+    return 0.5 + (score - 0.5) * strength
+
+
 def pair_preference(lab1, lab2):
     """Returns how nice two colors look together, from 0 to 1 (approximation of Schloss & Palmer 2011)."""
     # People tend to like pairs with similar hues, cool colors, and strong lightness contrast.
     L1, chroma1, hue1 = np.moveaxis(lab_to_lch(lab1), -1, 0)
     L2, chroma2, hue2 = np.moveaxis(lab_to_lch(lab2), -1, 0)
 
-    # grays have no real hue, so hue-based scores for them are pulled toward 0.5
+    # how much each color's hue "counts": 0 for gray, 1 for colorful (chroma 30+)
     hue_strength1 = np.minimum(chroma1 / 30, 1)
     hue_strength2 = np.minimum(chroma2 / 30, 1)
 
     # 1 = same hue, 0 = opposite sides of the color wheel
     hue_similarity = (1 + np.cos(np.radians(hue1 - hue2))) / 2
-    hue_similarity = 0.5 + (hue_similarity - 0.5) * np.minimum(hue_strength1, hue_strength2)
+    hue_similarity = fade_to_neutral(hue_similarity, np.minimum(hue_strength1, hue_strength2))
 
     # 0 = warmest (red-orange, ~50 degrees), 1 = coolest (blue-cyan, ~230 degrees)
-    coolness1 = 0.5 + ((1 - np.cos(np.radians(hue1 - 50))) / 2 - 0.5) * hue_strength1
-    coolness2 = 0.5 + ((1 - np.cos(np.radians(hue2 - 50))) / 2 - 0.5) * hue_strength2
+    coolness1 = fade_to_neutral((1 - np.cos(np.radians(hue1 - 50))) / 2, hue_strength1)
+    coolness2 = fade_to_neutral((1 - np.cos(np.radians(hue2 - 50))) / 2, hue_strength2)
     coolness = (coolness1 + coolness2) / 2
 
     # 0 = same lightness, 1 = black vs white
@@ -196,7 +179,7 @@ def build_candidate_space(lightness_range=LIGHTNESS_RANGE, hue_range=None):
     on_screen = np.all((rgb >= -1e-6) & (rgb <= 1 + 1e-6), axis=1)
     candidates = candidates[on_screen]
 
-    # optional hue limit, e.g. (180, 300) for blues; (330, 30) wraps around red
+    # optional hue limit, e.g. (180, 300) for blues; (330, 30) wraps around through red
     if hue_range is not None:
         _, chroma, hue = lab_to_lch(candidates).T
         start, end = hue_range[0] % 360, hue_range[1] % 360
@@ -217,6 +200,22 @@ def scale_0_to_1(values):
     if spread == 0:
         return np.zeros_like(values)
     return (values - values.min()) / spread
+
+
+def pick_next_color(palette, candidates, distance_weight, preference_weight):
+    """Scores every candidate against the current palette and returns the best one."""
+    # one row per palette color, one column per candidate
+    distances = np.array([ciede2000(color, candidates) for color in palette])
+    preferences = np.array([pair_preference(color, candidates) for color in palette])
+
+    closest_distance = distances.min(axis=0)       # how far it is from the most similar palette color
+    average_preference = preferences.mean(axis=0)  # how nice it looks with the whole palette
+
+    # skip colors already in the palette, then score the rest
+    available = closest_distance > 1e-6
+    score = (distance_weight * scale_0_to_1(closest_distance[available])
+             + preference_weight * scale_0_to_1(average_preference[available]))
+    return candidates[available][np.argmax(score)]
 
 
 def choose_colors(n_colors, seed_colors=None, distance_weight=DISTANCE_WEIGHT,
@@ -240,20 +239,38 @@ def choose_colors(n_colors, seed_colors=None, distance_weight=DISTANCE_WEIGHT,
         palette.append(candidates[rng.integers(len(candidates))])
 
     while len(palette) < n_colors:
-        # one row per palette color, one column per candidate
-        distances = np.array([ciede2000(color, candidates) for color in palette])
-        preferences = np.array([pair_preference(color, candidates) for color in palette])
-
-        closest_distance = distances.min(axis=0)       # distance to the most similar palette color
-        average_preference = preferences.mean(axis=0)  # how nice it looks with the whole palette
-
-        available = closest_distance > 1e-6  # never pick a color that's already in the palette
-        score = (distance_weight * scale_0_to_1(closest_distance[available])
-                 + preference_weight * scale_0_to_1(average_preference[available]))
-
-        palette.append(candidates[available][np.argmax(score)])
+        palette.append(pick_next_color(palette, candidates, distance_weight, preference_weight))
 
     return [lab_to_hex(color) for color in palette]
+
+
+# ---------------------------------------------------------------------------
+# Describing a palette (for output and comparing palettes -- doesn't affect picking)
+# ---------------------------------------------------------------------------
+# Everyday color names, with hex values based on the XKCD color survey (public domain).
+# Add or remove names here to change what gets printed.
+COLOR_NAMES = {
+    "black": "#000000", "dark gray": "#363737", "gray": "#929591", "light gray": "#d8dcd6",
+    "white": "#ffffff",
+    "dark red": "#840000", "red": "#e50000", "maroon": "#650021", "salmon": "#ff796c",
+    "orange": "#f97306", "light orange": "#fdaa48", "dark brown": "#653700", "brown": "#875f42",
+    "light brown": "#ad8150", "tan": "#d1b26f", "beige": "#e6daa6", "gold": "#dbb40c",
+    "yellow": "#ffff14", "olive": "#6e750e", "dark olive": "#373e02", "lime": "#aaff32",
+    "light green": "#96f97b", "green": "#15b01a", "bright green": "#01ff07", "dark green": "#033500",
+    "turquoise": "#06c2ac", "teal": "#029386", "dark teal": "#014d4e", "cyan": "#00ffff",
+    "light blue": "#95d0fc", "sky blue": "#75bbfd", "blue": "#0343df", "dark blue": "#00035b",
+    "indigo": "#380282", "violet": "#9a0eea", "purple": "#7e1e9c", "dark purple": "#35063e",
+    "lavender": "#c79fef", "magenta": "#c20078", "hot pink": "#ff028d", "pink": "#ff81c0",
+    "light pink": "#ffd1df",
+}
+
+
+def color_name(hex_color):
+    """Returns the closest everyday name for a hex color, e.g. "#1f77b4" -> "blue"."""
+    names = list(COLOR_NAMES)
+    name_labs = np.array([hex_to_lab(COLOR_NAMES[name]) for name in names])
+    distances = ciede2000(hex_to_lab(hex_color), name_labs)
+    return names[int(np.argmin(distances))]
 
 
 def palette_stats(hex_colors):
@@ -265,11 +282,9 @@ def palette_stats(hex_colors):
         return {"min_delta_e": None, "mean_delta_e": None, "mean_pair_preference": None}
 
     labs = [hex_to_lab(color) for color in hex_colors]
-    distances, preferences = [], []
-    for i in range(len(labs)):
-        for j in range(i + 1, len(labs)):
-            distances.append(float(ciede2000(labs[i], labs[j])))
-            preferences.append(float(pair_preference(labs[i], labs[j])))
+    pairs = list(combinations(labs, 2))  # every pair of colors, each counted once
+    distances = [float(ciede2000(color1, color2)) for color1, color2 in pairs]
+    preferences = [float(pair_preference(color1, color2)) for color1, color2 in pairs]
 
     return {
         "min_delta_e": min(distances),
@@ -279,7 +294,7 @@ def palette_stats(hex_colors):
 
 
 def main():
-    """Command line entry point: picks colors and prints them with their stats (no chart)."""
+    """Command line entry point: picks colors and prints them with names and stats (no chart)."""
     parser = argparse.ArgumentParser(description="Pick Colorgorical-style colors for a pie chart.")
     parser.add_argument("n_colors", type=int, help="number of colors (pie slices)")
     parser.add_argument("--seed-colors", nargs="*", help='starting hex colors, e.g. "#1f77b4"')
@@ -290,15 +305,23 @@ def main():
     parser.add_argument("--random-seed", type=int)
     args = parser.parse_args()
 
-    colors = choose_colors(args.n_colors, args.seed_colors, args.distance_weight, args.preference_weight,
-                           args.lightness, args.hue_range, args.random_seed)
+    colors = choose_colors(
+        args.n_colors,
+        seed_colors=args.seed_colors,
+        distance_weight=args.distance_weight,
+        preference_weight=args.preference_weight,
+        lightness_range=args.lightness,
+        hue_range=args.hue_range,
+        random_seed=args.random_seed,
+    )
 
     print("Colors:")
     for color in colors:
         print(f"  {color}  {color_name(color)}")
+
     print("Stats:")
-    for name, value in palette_stats(colors).items():
-        print(f"  {name}: {value:.2f}" if value is not None else f"  {name}: n/a")
+    for stat, value in palette_stats(colors).items():
+        print(f"  {stat}: {value:.2f}" if value is not None else f"  {stat}: n/a")
 
 
 if __name__ == "__main__":
